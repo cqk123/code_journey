@@ -1,0 +1,125 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+// ────────────────────────────── 用户体系 ──────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  isVerified    Boolean   @default(false)
+  verifyCode    String?
+  verifyCodeExp DateTime?
+  createdAt     DateTime  @default(now())
+
+  profile       JobSeekerProfile?
+  resumes       Resume[]
+  savedJobs     SavedJob[]
+  filterPresets FilterPreset[]
+  matchRecords  MatchRecord[]
+}
+
+model JobSeekerProfile {
+  id              String  @id @default(cuid())
+  userId          String  @unique
+  skillTags       String  @default("[]")
+  workYears       Float?
+  educationJson   String  @default("{}")
+  expectCities    String  @default("[]")
+  expectSalaryMin Int?
+  expectSalaryMax Int?
+  expectJobTypes  String  @default("[]")
+  expectOrgTypes  String  @default("[]")
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Resume {
+  id          String   @id @default(cuid())
+  userId      String
+  fileName    String
+  filePath    String
+  parsedText  String?
+  parseStatus String   @default("pending")
+  parseError  String?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ────────────────────────────── 岗位体系 ──────────────────────────────
+
+model JobPosting {
+  id               String   @id @default(cuid())
+  title            String
+  companyName      String
+  companyType      String?
+  city             String?
+  salaryMin        Int?
+  salaryMax        Int?
+  salarySource     String?
+  jobDirection     String?
+  techStack        String   @default("[]")
+  jdFullText       String?
+  sourceUrl        String?
+  sourcePlatform   String
+  publishedAt      DateTime?
+  lastRefreshedAt  DateTime?
+  status           String   @default("active")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  savedJobs    SavedJob[]
+  matchRecords MatchRecord[]
+}
+
+// ────────────────────────────── 收藏与匹配 ──────────────────────────────
+
+model SavedJob {
+  id        String   @id @default(cuid())
+  userId    String
+  jobId     String
+  note      String?
+  createdAt DateTime @default(now())
+
+  user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  JobPosting @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+}
+
+model MatchRecord {
+  id             String   @id @default(cuid())
+  userId         String
+  jobId          String
+  score          Int
+  matchedSkills  String   @default("[]")
+  missingSkills  String   @default("[]")
+  matchedAt      DateTime @default(now())
+
+  user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  JobPosting @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+}
+
+// ────────────────────────────── 筛选预设 ──────────────────────────────
+
+model FilterPreset {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  filterJson  String
+  createdAt   DateTime @default(now())
+  lastUsedAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
