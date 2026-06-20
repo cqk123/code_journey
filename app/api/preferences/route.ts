@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireUser } from '@/lib/auth';
+import { getBaseUrl } from '@/lib/base-url';
 
 export async function GET() {
   try {
@@ -47,7 +48,7 @@ export async function PUT(req: Request) {
     });
 
     // 更新后触发重新匹配
-    const base = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const base = await getBaseUrl();
     fetch(`${base}/api/cron/match`, {
       headers: { authorization: `Bearer ${process.env.CRON_SECRET || ''}` },
     }).catch(() => {});

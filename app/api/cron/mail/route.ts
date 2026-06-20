@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { sendMail } from '@/lib/mail';
+import { getBaseUrl } from '@/lib/base-url';
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization');
@@ -8,6 +9,8 @@ export async function GET(request: Request) {
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}` && !url.hostname.includes('localhost')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const baseUrl = await getBaseUrl();
 
   try {
     // 查询最近24小时内匹配度≥60的用户，按用户分组汇总
@@ -48,8 +51,8 @@ export async function GET(request: Request) {
             <h2 style="color:#2563eb">码途 · 岗位匹配周报</h2>
             <p>过去一周有 <strong>${jobs.length}</strong> 个岗位与你的技能匹配，以下是 TOP ${topJobs.length}：</p>
             <table style="width:100%;border-collapse:collapse">${jobList}</table>
-            <p style="margin-top:16px"><a href="${process.env.NEXT_PUBLIC_BASE_URL}/recommended" style="color:#2563eb">查看全部推荐 →</a></p>
-            <p style="color:#94a3b8;font-size:12px;margin-top:24px">你可以在 <a href="${process.env.NEXT_PUBLIC_BASE_URL}/settings">个人设置</a> 中关闭邮件通知。</p>
+            <p style="margin-top:16px"><a href="${baseUrl}/recommended" style="color:#2563eb">查看全部推荐 →</a></p>
+            <p style="color:#94a3b8;font-size:12px;margin-top:24px">你可以在 <a href="${baseUrl}/settings">个人设置</a> 中关闭邮件通知。</p>
           </div>`
         );
         sent++;

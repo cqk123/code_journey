@@ -4,6 +4,7 @@ import { requireUser } from '@/lib/auth';
 import { uploadResumeBlob } from '@/lib/blob';
 import { mkdir } from 'fs/promises';
 import path from 'path';
+import { getBaseUrl } from '@/lib/base-url';
 
 export async function POST(req: Request) {
   try {
@@ -74,7 +75,7 @@ export async function POST(req: Request) {
 
       // 触发匹配
       try {
-        const base = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        const base = await getBaseUrl();
         await fetch(`${base}/api/cron/match`, {
           headers: { authorization: `Bearer ${process.env.CRON_SECRET || ''}` },
         }).catch(() => {});
