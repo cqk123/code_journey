@@ -165,13 +165,18 @@ export default function ResumePage() {
                 {resume.parseStatus === 'pending' && <Badge variant="yellow" className="ml-2">待解析</Badge>}
               </div>
             </div>
-            <button
-              onClick={handleReparse}
-              disabled={reparsing}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50 cursor-pointer"
-            >
-              {reparsing ? '解析中...' : '重新解析'}
-            </button>
+            <div className="flex items-center gap-2">
+              <a href={`/api/resume/download?resumeId=${resume.id}`} className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                下载
+              </a>
+              <button
+                onClick={handleReparse}
+                disabled={reparsing}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50 cursor-pointer"
+              >
+                {reparsing ? '解析中...' : '重新解析'}
+              </button>
+            </div>
           </div>
         </div>
       )}

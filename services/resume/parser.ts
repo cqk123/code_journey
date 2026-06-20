@@ -4,6 +4,7 @@
 import mammoth from 'mammoth';
 import { readFile, stat } from 'fs/promises';
 import path from 'path';
+import { downloadResumeToBuffer, isCosPrivateUrl } from '@/lib/blob';
 
 const TECH_KEYWORDS = [
   'Java', 'Python', 'Go', 'Golang', 'Rust', 'C++', 'TypeScript', 'JavaScript', 'Kotlin', 'Swift', 'Scala', 'PHP', 'Ruby', 'C#', 'Dart',
@@ -197,7 +198,12 @@ async function fetchRemoteFile(url: string): Promise<string> {
 export async function parseResume(textOrFile: string): Promise<ParseResult> {
   let text: string;
 
-  if (textOrFile.startsWith('http://') || textOrFile.startsWith('https://')) {
+  // ── COS 私有桶：用 SDK 直读（不走公网，不烧流量）──
+  if (isCosPrivateUrl(textOrFile)) {
+    const buffer = await downloadResumeToBuffer(textOrFile);
+    const fileType = getFileType(textOrFile);
+    text = fileType === 'pdf' ? await parsePDF(buffer) : (await mammoth.extractRawText({ buffer })).value;
+  } else if (textOrFile.startsWith('http://') || textOrFile.startsWith('https://')) {
     text = await fetchRemoteFile(textOrFile);
   } else if (textOrFile.startsWith('/uploads/') || /\.(pdf|docx?)$/i.test(textOrFile)) {
     text = await readLocalFile(textOrFile);
