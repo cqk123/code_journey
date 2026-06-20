@@ -16,7 +16,7 @@ export function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<'form' | 'verify'>('form');
   const [verifyCode, setVerifyCode] = useState('');
-  const [devCode, setDevCode] = useState<string | null>(null);
+  const [sentCode, setSentCode] = useState<string | null>(null);
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
@@ -37,11 +37,14 @@ export function RegisterForm() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || '注册失败');
-      toast('验证码已发送到你的邮箱', 'success');
-      if (data.devCode) {
-        setDevCode(data.devCode);
-        toast('开发模式：验证码为 ' + data.devCode, 'info');
+
+      if (data.code) {
+        setSentCode(data.code);
+        toast('验证码已生成', 'success');
+      } else {
+        toast('验证码已发送到你的邮箱', 'success');
       }
+
       setStep('verify');
     } catch (err: any) {
       toast(err.message, 'error');
@@ -75,17 +78,18 @@ export function RegisterForm() {
     return (
       <form onSubmit={handleVerify} className="space-y-4">
         <p className="text-sm text-slate-600">
-          验证码已发送至 <strong>{email}</strong>，请查收邮件
+          验证码已发送至 <strong>{email}</strong>
         </p>
-        {devCode && (
-          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
-            <div className="text-xs text-yellow-700 mb-1">🔧 开发模式：无需查邮箱</div>
-            <div className="text-2xl font-bold tracking-[0.3em] text-yellow-800">{devCode}</div>
+        {sentCode && (
+          <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg text-center">
+            <p className="text-xs text-slate-500 mb-2">你的验证码</p>
+            <div className="text-3xl font-mono font-bold tracking-[0.3em] text-blue-700">{sentCode}</div>
+            <p className="text-xs text-slate-400 mt-2">10 分钟内有效</p>
           </div>
         )}
         <Input
           label="验证码"
-          placeholder="6位数字"
+          placeholder="输入 6 位验证码"
           value={verifyCode}
           onChange={(e) => setVerifyCode(e.target.value)}
           maxLength={6}
@@ -94,7 +98,7 @@ export function RegisterForm() {
         <Button type="submit" loading={loading} className="w-full">
           验证并登录
         </Button>
-        <button type="button" onClick={() => { setStep('form'); setDevCode(null); }} className="w-full text-sm text-slate-500 hover:text-slate-700">
+        <button type="button" onClick={() => { setStep('form'); setSentCode(null); }} className="w-full text-sm text-slate-500 hover:text-slate-700">
           返回修改邮箱
         </button>
       </form>
