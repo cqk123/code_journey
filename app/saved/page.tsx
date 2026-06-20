@@ -40,25 +40,22 @@ export default function SavedPage() {
 
   if (error) {
     return (
-      <div className="max-w-6xl mx-auto px-4 py-8 text-center">
-        <p className="text-red-500 mb-2">需要登录才能查看收藏</p>
+      <div className="max-w-6xl mx-auto px-4 py-16 text-center animate-in">
+        <p className="text-slate-500 mb-4">需要登录才能查看收藏</p>
         <Button onClick={() => router.push('/auth/login')}>去登录</Button>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="max-w-6xl mx-auto px-4 py-8 animate-in">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">我的收藏</h1>
+          <h1 className="text-2xl font-bold text-slate-900">我的收藏</h1>
           <p className="text-slate-500 text-sm mt-1">已收藏 {jobs.length} 个岗位</p>
         </div>
         {selected.size >= 2 && (
-          <Button onClick={() => {
-            const ids = Array.from(selected);
-            router.push(`/saved/compare?ids=${ids.join(',')}`);
-          }}>
+          <Button onClick={() => { const ids = Array.from(selected); router.push(`/saved/compare?ids=${ids.join(',')}`); }}>
             对比已选（{selected.size}）
           </Button>
         )}
@@ -67,28 +64,28 @@ export default function SavedPage() {
       {isLoading ? (
         <div className="text-center py-16 text-slate-400">加载中...</div>
       ) : jobs.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border">
-          <div className="text-5xl mb-3">⭐</div>
-          <p className="text-slate-500">还没有收藏的岗位</p>
-          <Button variant="outline" size="sm" className="mt-4" onClick={() => router.push('/')}>去首页看看</Button>
+        <div className="text-center py-20 glass-card">
+          <div className="text-5xl mb-4">⭐</div>
+          <p className="text-slate-500 mb-4">还没有收藏的岗位</p>
+          <Button variant="outline" size="sm" onClick={() => router.push('/')}>去首页看看</Button>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2 stagger">
           {jobs.map((job: any) => (
-            <div key={job.id} className={`bg-white rounded-xl border p-4 flex items-center gap-4 transition-colors ${job.status === 'closed' ? 'opacity-50' : ''}`}>
+            <div key={job.id} className={`glass-card p-4 flex items-center gap-4 ${job.status === 'closed' ? 'opacity-40' : ''}`}>
               <input
                 type="checkbox"
                 checked={selected.has(job.id)}
                 onChange={() => toggle(job.id)}
                 disabled={selected.size >= 5 && !selected.has(job.id)}
-                className="w-4 h-4 accent-blue-600 flex-shrink-0"
+                className="w-4 h-4 accent-blue-600 flex-shrink-0 rounded"
               />
               <Link href={`/jobs/${job.id}`} className="flex-1 min-w-0">
                 <div className="font-medium text-slate-800 truncate">{job.title}</div>
-                <div className="text-sm text-slate-500">{job.companyName} · {job.city}</div>
-                <div className="flex flex-wrap gap-1 mt-1">
+                <div className="text-sm text-slate-500 mt-0.5">{job.companyName} · {job.city}</div>
+                <div className="flex flex-wrap gap-1 mt-1.5">
                   {job.techStack?.slice(0, 4).map((s: string) => (
-                    <span key={s} className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs rounded-full">{s}</span>
+                    <span key={s} className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs rounded-md">{s}</span>
                   ))}
                 </div>
               </Link>

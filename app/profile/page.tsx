@@ -138,7 +138,7 @@ export default function ProfilePage() {
   const hasPrefs = prefsData?.expectCities?.length > 0 || prefsData?.expectJobTypes?.length > 0;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6">
+    <div className="max-w-3xl mx-auto px-4 py-8 animate-in">
       <h1 className="text-2xl font-bold mb-2">我的</h1>
       <p className="text-slate-500 text-sm mb-6">管理你的简历、技能画像和求职意向</p>
 
@@ -202,7 +202,7 @@ export default function ProfilePage() {
         {isLoading ? (
           <Skeleton className="h-32" />
         ) : profile ? (
-          <div className="bg-white rounded-xl border p-5 space-y-4">
+          <div className="glass-card p-5 space-y-4">
             {/* 技能标签 */}
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -267,7 +267,7 @@ export default function ProfilePage() {
             )}
           </div>
         ) : (
-          <div className="text-center py-6 bg-white rounded-xl border text-slate-400 text-sm">上传简历后，这里将展示自动提取的技能画像</div>
+          <div className="text-center py-6 glass-card text-slate-400 text-sm">上传简历后，这里将展示自动提取的技能画像</div>
         )}
       </section>
 
@@ -278,7 +278,7 @@ export default function ProfilePage() {
           <Link href="/profile/preferences" className="text-xs text-blue-600 hover:text-blue-700 font-medium">编辑</Link>
         </div>
         {prefsData ? (
-          <div className="bg-white rounded-xl border p-5">
+          <div className="glass-card p-5">
             {hasPrefs ? (
               <div className="space-y-2">
                 {prefsData.expectCities?.length > 0 && (
@@ -319,7 +319,7 @@ export default function ProfilePage() {
             )}
           </div>
         ) : (
-          <div className="bg-white rounded-xl border p-5 text-center"><Skeleton className="h-12" /></div>
+          <div className="glass-card p-5 text-center"><Skeleton className="h-12" /></div>
         )}
       </section>
 
@@ -327,19 +327,19 @@ export default function ProfilePage() {
       <section>
         <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">更多</h2>
         <div className="grid grid-cols-2 gap-3">
-          <Link href="/recommended" className="block p-4 bg-white rounded-xl border hover:border-blue-300 transition-colors">
+          <Link href="/recommended" className="block p-4 glass-card hover:border-blue-200 transition-all duration-200">
             <div className="font-medium text-slate-800 text-sm">个性化推荐</div>
             <div className="text-xs text-slate-400 mt-0.5">查看与你最匹配的岗位</div>
           </Link>
-          <Link href="/saved" className="block p-4 bg-white rounded-xl border hover:border-blue-300 transition-colors">
+          <Link href="/saved" className="block p-4 glass-card hover:border-blue-200 transition-all duration-200">
             <div className="font-medium text-slate-800 text-sm">我的收藏</div>
             <div className="text-xs text-slate-400 mt-0.5">已收藏的岗位列表</div>
           </Link>
-          <Link href="/settings" className="block p-4 bg-white rounded-xl border hover:border-blue-300 transition-colors">
+          <Link href="/settings" className="block p-4 glass-card hover:border-blue-200 transition-all duration-200">
             <div className="font-medium text-slate-800 text-sm">账号设置</div>
             <div className="text-xs text-slate-400 mt-0.5">修改密码等</div>
           </Link>
-          <Link href="/notifications" className="block p-4 bg-white rounded-xl border hover:border-blue-300 transition-colors">
+          <Link href="/notifications" className="block p-4 glass-card hover:border-blue-200 transition-all duration-200">
             <div className="font-medium text-slate-800 text-sm">通知中心</div>
             <div className="text-xs text-slate-400 mt-0.5">查看匹配通知</div>
           </Link>

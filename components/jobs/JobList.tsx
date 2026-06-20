@@ -13,7 +13,7 @@ type JobCardData = React.ComponentProps<typeof JobCard>['job'];
 export function JobList({ jobs, loading }: JobListProps) {
   if (loading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3 stagger">
         {Array.from({ length: 5 }).map((_, i) => (
           <JobCardSkeleton key={i} />
         ))}
@@ -32,7 +32,7 @@ export function JobList({ jobs, loading }: JobListProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 stagger">
       {jobs.map(job => (
         <JobCard key={job.id} job={job} />
       ))}

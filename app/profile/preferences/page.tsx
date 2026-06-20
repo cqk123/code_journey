@@ -9,7 +9,10 @@ import { cn } from '@/lib/utils';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
-const CITIES = ['北京', '上海', '深圳', '杭州', '成都', '广州', '南京', '武汉', '苏州', '西安', '远程'];
+const CITIES = Object.entries({
+  '北京': true, '上海': true, '深圳': true, '杭州': true, '成都': true,
+  '广州': true, '南京': true, '武汉': true, '苏州': true, '西安': true, '远程': true,
+}).map(([k]) => k);
 const JOB_TYPES = ['后端', '前端', '移动端', 'AI&算法', '数据', '测试&运维', '全栈', '其他'];
 const ORG_TYPES = ['大厂', '外企', '国企&央企', '中型企业', '创业公司'];
 const SALARY_OPTIONS = [
@@ -48,93 +51,57 @@ export default function PreferencesPage() {
       const res = await fetch('/api/preferences', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          expectCities,
-          expectJobTypes,
-          expectOrgTypes,
-          expectSalaryMin,
-          expectSalaryMax,
-        }),
+        body: JSON.stringify({ expectCities, expectJobTypes, expectOrgTypes, expectSalaryMin, expectSalaryMax }),
       });
       if (!res.ok) throw new Error();
-      toast('求职意向已保存，正在重新匹配岗位', 'success');
+      toast('求职意向已保存', 'success');
       mutate();
-      router.push('/recommended');
-    } catch {
-      toast('保存失败', 'error');
-    } finally {
-      setSaving(false);
-    }
+    } catch { toast('保存失败', 'error'); }
+    finally { setSaving(false); }
   }
 
   function toggle(arr: string[], set: (v: string[]) => void, val: string) {
     set(arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val]);
   }
 
+  const chipClass = (active: boolean) => cn(
+    'px-3 py-1.5 rounded-lg text-sm font-medium border transition-all duration-200 cursor-pointer',
+    active ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+  );
+
   if (isLoading) return null;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6">
-      <h1 className="text-2xl font-bold mb-6">求职意向设置</h1>
+    <div className="max-w-3xl mx-auto px-4 py-8 animate-in">
+      <h1 className="text-2xl font-bold text-slate-900 mb-2">求职意向</h1>
+      <p className="text-slate-500 text-sm mb-8">设置你的期望，让推荐更精准</p>
 
-      <div className="space-y-5">
-        {/* 期望城市 */}
-        <div>
-          <label className="text-sm font-medium text-slate-700 mb-2 block">期望城市</label>
-          <div className="flex flex-wrap gap-1.5">
-            {CITIES.map(c => (
-              <button key={c} onClick={() => toggle(expectCities, setExpectCities, c)} className={cn(
-                'px-2.5 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer',
-                expectCities.includes(c) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
-              )}>{c}</button>
-            ))}
+      <div className="space-y-6">
+        {[
+          { label: '期望城市', items: CITIES, selected: expectCities, set: setExpectCities },
+          { label: '期望岗位方向', items: JOB_TYPES, selected: expectJobTypes, set: setExpectJobTypes },
+          { label: '期望单位类型', items: ORG_TYPES, selected: expectOrgTypes, set: setExpectOrgTypes },
+        ].map(group => (
+          <div key={group.label} className="glass-card p-5">
+            <label className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3 block">{group.label}</label>
+            <div className="flex flex-wrap gap-2">
+              {group.items.map((item: string) => (
+                <button key={item} onClick={() => toggle(group.selected, group.set, item)}
+                  className={chipClass(group.selected.includes(item))}>{item}</button>
+              ))}
+            </div>
           </div>
-        </div>
+        ))}
 
-        {/* 期望岗位 */}
-        <div>
-          <label className="text-sm font-medium text-slate-700 mb-2 block">期望岗位方向</label>
-          <div className="flex flex-wrap gap-1.5">
-            {JOB_TYPES.map(j => (
-              <button key={j} onClick={() => toggle(expectJobTypes, setExpectJobTypes, j)} className={cn(
-                'px-2.5 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer',
-                expectJobTypes.includes(j) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
-              )}>{j}</button>
-            ))}
-          </div>
-        </div>
-
-        {/* 期望单位 */}
-        <div>
-          <label className="text-sm font-medium text-slate-700 mb-2 block">期望单位类型</label>
-          <div className="flex flex-wrap gap-1.5">
-            {ORG_TYPES.map(o => (
-              <button key={o} onClick={() => toggle(expectOrgTypes, setExpectOrgTypes, o)} className={cn(
-                'px-2.5 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer',
-                expectOrgTypes.includes(o) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
-              )}>{o}</button>
-            ))}
-          </div>
-        </div>
-
-        {/* 期望薪资 */}
-        <div>
-          <label className="text-sm font-medium text-slate-700 mb-2 block">期望薪资范围</label>
-          <div className="flex flex-wrap gap-1.5">
+        <div className="glass-card p-5">
+          <label className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3 block">期望薪资范围</label>
+          <div className="flex flex-wrap gap-2">
             {SALARY_OPTIONS.map(opt => {
               const active = expectSalaryMin === opt.min && expectSalaryMax === opt.max;
               return (
-                <button
-                  key={opt.label}
-                  onClick={() => {
-                    setExpectSalaryMin(opt.min);
-                    setExpectSalaryMax(opt.max);
-                  }}
-                  className={cn(
-                    'px-2.5 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer',
-                    active ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
-                  )}
-                >{opt.label}</button>
+                <button key={opt.label}
+                  onClick={() => { setExpectSalaryMin(opt.min); setExpectSalaryMax(opt.max); }}
+                  className={chipClass(active)}>{opt.label}</button>
               );
             })}
           </div>
@@ -142,8 +109,8 @@ export default function PreferencesPage() {
       </div>
 
       <div className="mt-8 flex gap-3">
-        <Button onClick={save} loading={saving}>保存并查看推荐</Button>
-        <Button variant="ghost" onClick={() => router.push('/')}>返回首页</Button>
+        <Button onClick={save} loading={saving} className="shadow-sm shadow-blue-500/20">保存并返回</Button>
+        <Button variant="ghost" onClick={() => router.back()}>取消</Button>
       </div>
     </div>
   );

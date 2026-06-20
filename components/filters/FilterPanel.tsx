@@ -39,14 +39,14 @@ interface FilterPanelProps {
 
 const btnClass = (active: boolean) =>
   cn(
-    'px-2.5 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer',
-    active ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
+    'px-2.5 py-1 rounded-lg text-xs font-medium border transition-all duration-200 cursor-pointer',
+    active ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
   );
 
 const timeBtnClass = (active: boolean) =>
   cn(
-    'px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer',
-    active ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
+    'px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200 cursor-pointer',
+    active ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
   );
 
 export function FilterPanel(props: FilterPanelProps) {
@@ -71,7 +71,7 @@ export function FilterPanel(props: FilterPanelProps) {
   const hasFilters = f.cities.length > 0 || f.orgTypes.length > 0 || f.directions.length > 0 || f.salaryMin > 0 || f.time !== 'all';
 
   return React.createElement('div', {
-    className: cn('bg-white rounded-xl border border-slate-100 p-4 space-y-4', props.className),
+    className: cn('glass-card p-5 space-y-4', props.className),
     children: [
       React.createElement('div', { key: 'time', children: [
         React.createElement('div', { key: 'label', className: 'text-xs font-medium text-slate-500 mb-2', children: '时间' }),
@@ -121,7 +121,7 @@ export function FilterPanel(props: FilterPanelProps) {
             ]})
           : null,
         React.createElement('div', { key: 'actions', className: 'flex items-center justify-between', children: [
-          React.createElement('div', { key: 'count', className: 'text-sm text-slate-500', children: rc !== undefined ? `共 ${rc} 个岗位` : '' }),
+          React.createElement('div', { key: 'count', className: 'text-sm text-slate-400', children: rc !== undefined ? `共 ${rc} 个岗位` : '' }),
           React.createElement('div', { key: 'buttons', className: 'flex gap-2', children: [
             hasFilters ? React.createElement(Button, { key: 'clear', variant: 'ghost', size: 'sm', onClick: clearAll, children: '清除筛选' }) : null,
             (onSave && hasFilters)
