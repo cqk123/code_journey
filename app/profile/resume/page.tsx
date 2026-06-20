@@ -21,6 +21,11 @@ export default function ResumePage() {
   const [editSkills, setEditSkills] = useState('');
   const [showSkillEdit, setShowSkillEdit] = useState(false);
   const [savingSkills, setSavingSkills] = useState(false);
+  const [showInfoEdit, setShowInfoEdit] = useState(false);
+  const [editWorkYears, setEditWorkYears] = useState('');
+  const [editDegree, setEditDegree] = useState('');
+  const [editMajor, setEditMajor] = useState('');
+  const [savingInfo, setSavingInfo] = useState(false);
 
   async function handleUpload(file: File) {
     setUploading(true);
@@ -103,6 +108,28 @@ export default function ResumePage() {
       mutate();
     } catch { toast('保存失败', 'error'); }
     finally { setSavingSkills(false); }
+  }
+
+  async function handleSaveInfo() {
+    setSavingInfo(true);
+    try {
+      const workYears = editWorkYears ? parseFloat(editWorkYears) : null;
+      const education = editDegree ? { degree: editDegree, major: editMajor || '' } : {};
+      const res = await fetch('/api/resume/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          skillTags: profile?.skillTags || [],
+          workYears,
+          education,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      toast('个人信息已更新', 'success');
+      setShowInfoEdit(false);
+      mutate();
+    } catch { toast('保存失败', 'error'); }
+    finally { setSavingInfo(false); }
   }
 
   if (error && !data) {
@@ -222,14 +249,59 @@ export default function ResumePage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="text-xs text-slate-400 mb-0.5">工作年限</div>
-              <div className="font-medium">{profile.workYears ? `${profile.workYears} 年` : '未提取'}</div>
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-xs text-slate-400">工作年限</span>
+                <button onClick={() => {
+                  setShowInfoEdit(!showInfoEdit);
+                  setEditWorkYears(profile?.workYears?.toString() || '');
+                  setEditDegree(profile?.education?.degree || '');
+                  setEditMajor(profile?.education?.major || '');
+                }} className="text-xs text-blue-600 hover:text-blue-700 cursor-pointer">
+                  {showInfoEdit ? '取消' : '编辑'}
+                </button>
+              </div>
+              {showInfoEdit ? (
+                <input
+                  type="number" min="0" max="50" step="0.5"
+                  value={editWorkYears}
+                  onChange={(e) => setEditWorkYears(e.target.value)}
+                  placeholder="如 3"
+                  className="w-full px-2 py-1 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              ) : (
+                <div className="font-medium">{profile.workYears ? `${profile.workYears} 年` : '未填写'}</div>
+              )}
             </div>
             <div>
               <div className="text-xs text-slate-400 mb-0.5">学历</div>
-              <div className="font-medium">{profile.education?.degree || '未提取'}</div>
+              {showInfoEdit ? (
+                <div className="space-y-1.5">
+                  <input
+                    value={editDegree}
+                    onChange={(e) => setEditDegree(e.target.value)}
+                    placeholder="学历，如 本科"
+                    className="w-full px-2 py-1 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                  <input
+                    value={editMajor}
+                    onChange={(e) => setEditMajor(e.target.value)}
+                    placeholder="专业，如 计算机科学"
+                    className="w-full px-2 py-1 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+              ) : (
+                <div className="font-medium">{profile.education?.degree || profile.education?.major ? `${profile.education.degree || ''} ${profile.education.major || ''}` : '未填写'}</div>
+              )}
             </div>
           </div>
+          {showInfoEdit && (
+            <div className="flex gap-2 pt-1">
+              <button onClick={handleSaveInfo} disabled={savingInfo} className="px-3 py-1 bg-blue-600 text-white text-xs rounded-md hover:bg-blue-700 disabled:opacity-50 cursor-pointer">
+                {savingInfo ? '保存中...' : '保存'}
+              </button>
+              <button onClick={() => setShowInfoEdit(false)} className="px-3 py-1 border text-xs rounded-md text-slate-600 hover:bg-slate-50 cursor-pointer">取消</button>
+            </div>
+          )}
           {resume && (
             <div className="text-xs text-slate-400 pt-2 border-t">
               最后解析：{new Date(resume.createdAt).toLocaleString('zh-CN')}
