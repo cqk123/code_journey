@@ -13,7 +13,10 @@ export function Navbar({ user }: NavbarProps) {
 
   const links = [
     { href: '/', label: '岗位Feed' },
-    ...(user ? [{ href: '/recommended', label: '推荐' }] : []),
+    ...(user ? [
+      { href: '/recommended', label: '推荐' },
+      { href: '/saved', label: '收藏' },
+    ] : []),
   ];
 
   return (
@@ -42,8 +45,11 @@ export function Navbar({ user }: NavbarProps) {
         <div className="flex items-center gap-3">
           {user ? (
             <>
-              <Link href="/saved" className="text-sm text-slate-600 hover:text-slate-900">
+              <Link href="/profile" className="text-sm text-slate-600 hover:text-slate-900">
                 我的
+              </Link>
+              <Link href="/settings" className="text-sm text-slate-600 hover:text-slate-900">
+                设置
               </Link>
               <span className="text-sm text-slate-400 truncate max-w-[120px]">{user.email}</span>
             </>

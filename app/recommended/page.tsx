@@ -40,8 +40,11 @@ export default function RecommendedPage() {
               共 {data.total} 个匹配岗位
             </span>
           )}
+          <Button size="sm" variant="outline" onClick={() => router.push('/profile')}>
+            上传简历
+          </Button>
           <Button size="sm" variant="outline" onClick={() => router.push('/profile/preferences')}>
-            调整求职意向
+            调整意向
           </Button>
         </div>
       </div>
@@ -58,7 +61,7 @@ export default function RecommendedPage() {
             请先上传简历并设置求职意向，系统将为你智能匹配最适合的岗位
           </p>
           <div className="flex justify-center gap-3">
-            <Button onClick={() => router.push('/profile/resume')}>上传简历</Button>
+            <Button onClick={() => router.push('/profile')}>上传简历</Button>
             <Button variant="outline" onClick={() => router.push('/profile/preferences')}>设置意向</Button>
           </div>
         </div>
