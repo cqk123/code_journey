@@ -35,11 +35,24 @@ function calcMatchScore(job: {
 }, input: MatchInput): MatchResult {
   // ── 技能匹配（权重 60%）──
   const jobSkills = job.techStack;
-  const matchedSkills = input.userSkills.filter(s => jobSkills.includes(s));
-  const missingSkills = jobSkills.filter(s => !input.userSkills.includes(s));
+  // 改为模糊匹配：用户技能包含岗位标签（或岗位标签包含用户技能），不区分大小写
+  const matchedSkills = input.userSkills.filter(us => {
+    const ul = us.toLowerCase();
+    return jobSkills.some(js => {
+      const jl = js.toLowerCase();
+      return ul.includes(jl) || jl.includes(ul);
+    });
+  });
+  const missingSkills = jobSkills.filter(js => {
+    const jl = js.toLowerCase();
+    return !input.userSkills.some(us => {
+      const ul = us.toLowerCase();
+      return ul.includes(jl) || jl.includes(ul);
+    });
+  });
   const skillScore = jobSkills.length > 0
     ? (matchedSkills.length / jobSkills.length) * 100
-    : 50; // 岗位没有标注技术栈，默认50
+    : 50;
 
   // ── 经验匹配（权重 20%）──
   let expScore = 60; // 默认
