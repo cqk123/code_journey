@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/Badge';
 import { JobFeedShell } from '@/components/jobs/JobFeedShell';
 
 export default function HomePage() {
