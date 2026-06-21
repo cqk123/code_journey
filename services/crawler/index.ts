@@ -39,6 +39,7 @@ export async function saveJobs(jobs: JobRawData[]): Promise<{ added: number; upd
       publishedAt: job.publishedAt || new Date(),
       lastRefreshedAt: new Date(),
       status: 'active' as const,
+      freshness: 'today' as const,
     };
 
     if (existing) {
@@ -63,7 +64,7 @@ export async function expireOldJobs() {
       status: 'active',
       lastRefreshedAt: { lt: cutoff },
     },
-    data: { status: 'expired' },
+    data: { status: 'expired', freshness: 'expired' },
   });
   return result.count;
 }

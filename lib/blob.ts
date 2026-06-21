@@ -135,3 +135,24 @@ export async function deleteResumeBlob(url: string) {
 function sanitize(name: string) {
   return name.replace(/[^a-zA-Z0-9\u4e00-\u9fff._-]/g, '_');
 }
+
+// ── 图片处理 ──
+
+/** 判断是否为 COS URL */
+export function isCosUrl(url: string): boolean {
+  return url.includes('.cos.') && url.includes('.myqcloud.com');
+}
+
+/** 生成带 COS 图片处理参数的 URL（缩放 + WebP 格式） */
+export function getProcessedImageUrl(rawUrl: string, width?: number, height?: number): string {
+  if (!isCosUrl(rawUrl)) return rawUrl;
+  const params: string[] = [];
+  if (width || height) {
+    const w = width || '';
+    const h = height || '';
+    params.push(`imageView2/1/w/${w}/h/${h}`);
+  }
+  params.push('format/webp');
+  const separator = rawUrl.includes('?') ? '&' : '?';
+  return `${rawUrl}${separator}${params.join('/')}`;
+}

@@ -26,6 +26,8 @@ model User {
   savedJobs     SavedJob[]
   filterPresets FilterPreset[]
   matchRecords  MatchRecord[]
+
+  @@index([email])
 }
 
 model JobSeekerProfile {
@@ -76,11 +78,20 @@ model JobPosting {
   publishedAt      DateTime?
   lastRefreshedAt  DateTime?
   status           String   @default("active")
+  freshness        String   @default("today")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
   savedJobs    SavedJob[]
   matchRecords MatchRecord[]
+
+  @@index([status, lastRefreshedAt(sort: Desc)])
+  @@index([status, city])
+  @@index([status, companyType])
+  @@index([status, jobDirection])
+  @@index([status, salaryMin, salaryMax])
+  @@index([title])
+  @@index([companyName])
 }
 
 // ────────────────────────────── 收藏与匹配 ──────────────────────────────
@@ -96,6 +107,7 @@ model SavedJob {
   job  JobPosting @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
   @@unique([userId, jobId])
+  @@index([userId, createdAt(sort: Desc)])
 }
 
 model MatchRecord {
@@ -111,6 +123,8 @@ model MatchRecord {
   job  JobPosting @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
   @@unique([userId, jobId])
+  @@index([userId, score(sort: Desc)])
+  @@index([matchedAt])
 }
 
 // ────────────────────────────── 筛选预设 ──────────────────────────────

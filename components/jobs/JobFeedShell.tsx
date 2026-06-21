@@ -5,6 +5,7 @@ import useSWR from 'swr';
 import { FilterPanel, FilterState } from '@/components/filters/FilterPanel';
 import { JobList } from '@/components/jobs/JobList';
 import { useToast } from '@/components/ui/Toast';
+import { cn } from '@/lib/utils';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
@@ -31,10 +32,11 @@ export function JobFeedShell() {
   queryParams.set('pageSize', '20');
 
   const url = `/api/jobs?${queryParams.toString()}`;
-  const { data, isLoading, error } = useSWR(url, fetcher, { keepPreviousData: true });
+  const { data, isLoading, error, mutate } = useSWR(url, fetcher, { keepPreviousData: true });
 
   const [saveName, setSaveName] = useState('');
   const [showSaveInput, setShowSaveInput] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   async function handleSaveFilter() {
     if (!saveName.trim()) {
@@ -54,6 +56,13 @@ export function JobFeedShell() {
     } catch (err: any) {
       toast(err.message || '保存失败', 'error');
     }
+  }
+
+  function goToPage(page: number) {
+    setCurrentPage(page);
+    const params = new URLSearchParams(queryParams);
+    params.set('page', String(page));
+    mutate(fetcher(`/api/jobs?${params.toString()}`));
   }
 
   return (
@@ -83,16 +92,13 @@ export function JobFeedShell() {
             {Array.from({ length: Math.min(Math.ceil(data.total / data.pageSize), 10) }).map((_, i) => (
               <button
                 key={i}
-                onClick={() => {
-                  // Page change handled via SWR revalidation (simple: re-fetch)
-                  const p = i + 1;
-                  const params = new URLSearchParams(queryParams);
-                  params.set('page', String(p));
-                  fetcher(`/api/jobs?${params.toString()}`).then(d => {
-                    // Use SWR mutate pattern - in production use proper pagination
-                  });
-                }}
-                className="px-3 py-1.5 rounded text-sm font-medium border border-slate-200 hover:bg-slate-50"
+                onClick={() => goToPage(i + 1)}
+                className={cn(
+                  'px-3 py-1.5 rounded text-sm font-medium border transition-colors',
+                  currentPage === i + 1
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'border-slate-200 hover:bg-slate-50'
+                )}
               >
                 {i + 1}
               </button>

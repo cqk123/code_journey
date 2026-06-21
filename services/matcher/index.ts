@@ -104,7 +104,7 @@ function calcMatchScore(job: {
 }
 
 /**
- * 对单个用户运行全量匹配，写入 MatchRecord
+ * 对单个用户运行全量匹配，写入 MatchRecord（批量优化版）
  */
 export async function matchForUser(userId: string): Promise<number> {
   const profile = await prisma.jobSeekerProfile.findUnique({ where: { userId } });
@@ -133,36 +133,50 @@ export async function matchForUser(userId: string): Promise<number> {
     },
   });
 
-  let matched = 0;
-  for (const job of jobs) {
-    const result = calcMatchScore(
+  const results = jobs.map(job =>
+    calcMatchScore(
       { ...job, techStack: JSON.parse(job.techStack as unknown as string || '[]') },
       input
-    );
+    )
+  );
 
-    await prisma.matchRecord.upsert({
-      where: { userId_jobId: { userId, jobId: job.id } },
-      create: {
-        userId,
-        jobId: job.id,
-        score: result.score,
-        matchedSkills: JSON.stringify(result.matchedSkills),
-        missingSkills: JSON.stringify(result.missingSkills),
-      },
-      update: {
-        score: result.score,
-        matchedSkills: JSON.stringify(result.matchedSkills),
-        missingSkills: JSON.stringify(result.missingSkills),
-      },
-    });
-    matched++;
-  }
+  // 批量写入：先 createMany 忽略冲突，再批量更新
+  const matchData = results.map(r => ({
+    userId,
+    jobId: r.jobId,
+    score: r.score,
+    matchedSkills: JSON.stringify(r.matchedSkills),
+    missingSkills: JSON.stringify(r.missingSkills),
+    matchedAt: new Date(),
+  }));
 
-  return matched;
+  // 批量写入：使用事务包装
+  await prisma.$transaction(async (tx) => {
+    for (const d of matchData) {
+      const existing = await tx.matchRecord.findUnique({
+        where: { userId_jobId: { userId: d.userId, jobId: d.jobId } },
+      });
+      if (existing) {
+        await tx.matchRecord.update({
+          where: { userId_jobId: { userId: d.userId, jobId: d.jobId } },
+          data: {
+            score: d.score,
+            matchedSkills: d.matchedSkills,
+            missingSkills: d.missingSkills,
+            matchedAt: d.matchedAt,
+          },
+        });
+      } else {
+        await tx.matchRecord.create({ data: d });
+      }
+    }
+  });
+
+  return results.length;
 }
 
 /**
- * 对新入库的岗位，匹配所有已激活用户
+ * 对新入库的岗位，匹配所有已激活用户（批量优化版）
  */
 export async function matchForJob(jobId: string): Promise<number> {
   const profiles = await prisma.jobSeekerProfile.findMany({
@@ -183,8 +197,9 @@ export async function matchForJob(jobId: string): Promise<number> {
   });
   if (!job) return 0;
 
-  let matched = 0;
-  for (const profile of profiles) {
+  const jobWithParsed = { ...job, techStack: JSON.parse(job.techStack as unknown as string || '[]') };
+
+  const results = profiles.map(profile => {
     const input: MatchInput = {
       userSkills: JSON.parse(profile.skillTags || '[]'),
       userWorkYears: profile.workYears,
@@ -194,31 +209,43 @@ export async function matchForJob(jobId: string): Promise<number> {
       expectJobTypes: JSON.parse(profile.expectJobTypes || '[]'),
       expectOrgTypes: JSON.parse(profile.expectOrgTypes || '[]'),
     };
+    return {
+      userId: profile.userId,
+      ...calcMatchScore(jobWithParsed, input),
+    };
+  });
 
-    const result = calcMatchScore(
-      { ...job, techStack: JSON.parse(job.techStack as unknown as string || '[]') },
-      input
-    );
+  const matchData = results.map(r => ({
+    userId: r.userId,
+    jobId,
+    score: r.score,
+    matchedSkills: JSON.stringify(r.matchedSkills),
+    missingSkills: JSON.stringify(r.missingSkills),
+    matchedAt: new Date(),
+  }));
 
-    await prisma.matchRecord.upsert({
-      where: { userId_jobId: { userId: profile.userId, jobId } },
-      create: {
-        userId: profile.userId,
-        jobId,
-        score: result.score,
-        matchedSkills: JSON.stringify(result.matchedSkills),
-        missingSkills: JSON.stringify(result.missingSkills),
-      },
-      update: {
-        score: result.score,
-        matchedSkills: JSON.stringify(result.matchedSkills),
-        missingSkills: JSON.stringify(result.missingSkills),
-      },
-    });
-    matched++;
-  }
+  await prisma.$transaction(async (tx) => {
+    for (const d of matchData) {
+      const existing = await tx.matchRecord.findUnique({
+        where: { userId_jobId: { userId: d.userId, jobId: d.jobId } },
+      });
+      if (existing) {
+        await tx.matchRecord.update({
+          where: { userId_jobId: { userId: d.userId, jobId: d.jobId } },
+          data: {
+            score: d.score,
+            matchedSkills: d.matchedSkills,
+            missingSkills: d.missingSkills,
+            matchedAt: d.matchedAt,
+          },
+        });
+      } else {
+        await tx.matchRecord.create({ data: d });
+      }
+    }
+  });
 
-  return matched;
+  return results.length;
 }
 
 /**

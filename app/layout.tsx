@@ -5,8 +5,6 @@ import { ToastProvider } from '@/components/ui/Toast';
 import { getUser } from '@/lib/auth';
 import './globals.css';
 
-export const dynamic = 'force-dynamic';
-
 export const metadata: Metadata = {
   title: '码途 - 计算机工作机会信息平台',
   description: '跨平台岗位聚合，简历智能匹配，五维组合筛选',

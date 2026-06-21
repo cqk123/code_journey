@@ -68,6 +68,21 @@ export async function GET(request: Request) {
         orderBy: { lastRefreshedAt: 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
+        select: {
+          id: true,
+          title: true,
+          companyName: true,
+          companyType: true,
+          city: true,
+          salaryMin: true,
+          salaryMax: true,
+          salarySource: true,
+          jobDirection: true,
+          techStack: true,
+          lastRefreshedAt: true,
+          sourcePlatform: true,
+          freshness: true,
+        },
       }),
     ]);
 
@@ -89,35 +104,32 @@ export async function GET(request: Request) {
       matchScores = Object.fromEntries(matches.map(m => [m.jobId, m.score]));
     }
 
-    const list = jobs.map(job => {
-      const now = Date.now();
-      const refreshed = job.lastRefreshedAt?.getTime() || 0;
-      let freshness = 'expired';
-      if (now - refreshed < 24 * 60 * 60 * 1000) freshness = 'today';
-      else if (now - refreshed < 7 * 24 * 60 * 60 * 1000) freshness = '7d';
-      else if (now - refreshed < 30 * 24 * 60 * 60 * 1000) freshness = '30d';
+    const list = jobs.map(job => ({
+      id: job.id,
+      title: job.title,
+      companyName: job.companyName,
+      companyType: job.companyType,
+      city: job.city,
+      salaryMin: job.salaryMin,
+      salaryMax: job.salaryMax,
+      salarySource: job.salarySource,
+      jobDirection: job.jobDirection,
+      techStack: JSON.parse(job.techStack || '[]'),
+      lastRefreshedAt: job.lastRefreshedAt?.toISOString() || null,
+      freshness: job.freshness,
+      sourcePlatform: job.sourcePlatform,
+      matchScore: matchScores[job.id] || null,
+      isSaved: savedJobs.has(job.id),
+    }));
 
-      return {
-        id: job.id,
-        title: job.title,
-        companyName: job.companyName,
-        companyType: job.companyType,
-        city: job.city,
-        salaryMin: job.salaryMin,
-        salaryMax: job.salaryMax,
-        salarySource: job.salarySource,
-        jobDirection: job.jobDirection,
-        techStack: JSON.parse(job.techStack || '[]'),
-        publishedAt: job.publishedAt?.toISOString() || null,
-        lastRefreshedAt: job.lastRefreshedAt?.toISOString() || null,
-        freshness,
-        sourcePlatform: job.sourcePlatform,
-        matchScore: matchScores[job.id] || null,
-        isSaved: savedJobs.has(job.id),
-      };
-    });
-
-    return NextResponse.json({ total, page, pageSize, list });
+    return NextResponse.json(
+      { total, page, pageSize, list },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+        },
+      }
+    );
   } catch (err) {
     console.error('jobs error:', err);
     return NextResponse.json({ error: '服务器错误' }, { status: 500 });

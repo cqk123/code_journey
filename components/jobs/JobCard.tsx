@@ -1,3 +1,4 @@
+import React from 'react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/Badge';
 import { Tag } from '@/components/ui/Tag';
@@ -40,7 +41,7 @@ const companyTypeColors: Record<string, 'blue' | 'green' | 'red' | 'yellow' | 's
   '大厂': 'blue', '外企': 'green', '国企&央企': 'red', '创业公司': 'yellow', '中型企业': 'slate',
 };
 
-export function JobCard({ job }: JobCardProps) {
+export const JobCard = React.memo(function JobCard({ job }: JobCardProps) {
   const fresh = freshnessConfig[job.freshness] || freshnessConfig['30d'];
 
   return (
@@ -99,4 +100,4 @@ export function JobCard({ job }: JobCardProps) {
       </div>
     </Link>
   );
-}
+});

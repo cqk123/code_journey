@@ -37,13 +37,6 @@ export async function GET(
       isSaved = !!saved;
     }
 
-    const now = Date.now();
-    const refreshed = job.lastRefreshedAt?.getTime() || 0;
-    let freshness = 'expired';
-    if (now - refreshed < 24 * 60 * 60 * 1000) freshness = 'today';
-    else if (now - refreshed < 7 * 24 * 60 * 60 * 1000) freshness = '7d';
-    else if (now - refreshed < 30 * 24 * 60 * 60 * 1000) freshness = '30d';
-
     return NextResponse.json({
       id: job.id,
       title: job.title,
@@ -60,10 +53,14 @@ export async function GET(
       sourcePlatform: job.sourcePlatform,
       publishedAt: job.publishedAt?.toISOString() || null,
       lastRefreshedAt: job.lastRefreshedAt?.toISOString() || null,
-      freshness,
+      freshness: job.freshness,
       status: job.status,
       matchInfo,
       isSaved,
+    }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
+      },
     });
   } catch (err) {
     console.error('job detail error:', err);

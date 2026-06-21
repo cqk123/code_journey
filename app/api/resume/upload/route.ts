@@ -47,65 +47,63 @@ export async function POST(req: Request) {
       },
     });
 
-    // 自动触发解析
-    try {
-      const { parseResume } = await import('@/services/resume/parser');
-      const result = await parseResume(filePath);
-
-      await prisma.resume.update({
-        where: { id: resume.id },
-        data: { parseStatus: 'done', parsedText: file.name },
-      });
-
-      // 更新或创建技能画像
-      await prisma.jobSeekerProfile.upsert({
-        where: { userId: user.id },
-        create: {
-          userId: user.id,
-          skillTags: JSON.stringify(result.skillTags),
-          workYears: result.workYears,
-          educationJson: JSON.stringify(result.education),
-        },
-        update: {
-          skillTags: JSON.stringify(result.skillTags),
-          workYears: result.workYears,
-          educationJson: JSON.stringify(result.education),
-        },
-      });
-
-      // 触发匹配
+    // 异步触发解析（不阻塞响应）
+    (async () => {
       try {
-        const base = await getBaseUrl();
-        await fetch(`${base}/api/cron/match`, {
-          headers: { authorization: `Bearer ${process.env.CRON_SECRET || ''}` },
-        }).catch(() => {});
-      } catch {}
+        const { parseResume } = await import('@/services/resume/parser');
+        await prisma.resume.update({
+          where: { id: resume.id },
+          data: { parseStatus: 'parsing' },
+        });
+        const result = await parseResume(filePath);
 
-      return NextResponse.json({
-        resume: {
-          id: resume.id,
-          fileName: resume.fileName,
-          filePath,
-          parseStatus: 'done',
-        },
-        profile: {
-          skillTags: result.skillTags,
-          workYears: result.workYears,
-          education: result.education,
-        },
-      });
-    } catch (parseErr) {
-      await prisma.resume.update({
-        where: { id: resume.id },
-        data: {
-          parseStatus: 'failed',
-          parseError: String(parseErr),
-        },
-      });
-      return NextResponse.json({
-        resume: { id: resume.id, fileName: resume.fileName, filePath, parseStatus: 'failed', parseError: String(parseErr) },
-      }, { status: 200 });
-    }
+        await prisma.resume.update({
+          where: { id: resume.id },
+          data: { parseStatus: 'done', parsedText: JSON.stringify(result) },
+        });
+
+        // 更新或创建技能画像
+        await prisma.jobSeekerProfile.upsert({
+          where: { userId: user.id },
+          create: {
+            userId: user.id,
+            skillTags: JSON.stringify(result.skillTags),
+            workYears: result.workYears,
+            educationJson: JSON.stringify(result.education),
+          },
+          update: {
+            skillTags: JSON.stringify(result.skillTags),
+            workYears: result.workYears,
+            educationJson: JSON.stringify(result.education),
+          },
+        });
+
+        // 触发匹配
+        try {
+          const base = await getBaseUrl();
+          await fetch(`${base}/api/cron/match`, {
+            headers: { authorization: `Bearer ${process.env.CRON_SECRET || ''}` },
+          }).catch(() => {});
+        } catch {}
+      } catch (parseErr) {
+        await prisma.resume.update({
+          where: { id: resume.id },
+          data: {
+            parseStatus: 'failed',
+            parseError: String(parseErr),
+          },
+        });
+      }
+    })();
+
+    return NextResponse.json({
+      resume: {
+        id: resume.id,
+        fileName: resume.fileName,
+        filePath,
+        parseStatus: 'pending',
+      },
+    });
   } catch (err: any) {
     if (err instanceof Response) throw err;
     console.error('resume upload error:', err);
